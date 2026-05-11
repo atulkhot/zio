@@ -12,7 +12,7 @@ private[test] trait PrettyPrintVersionSpecific {
   def prettyPrintProduct(product: Product): String = {
     val name    = product.productPrefix
     val labels0 = labels(product)
-    val body = labels0
+    val body    = labels0
       .zip(product.productIterator)
       .map { case (key, value) =>
         s"${(key + " =").faint} ${PrettyPrint(value)}"
