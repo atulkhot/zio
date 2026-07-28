@@ -57,7 +57,7 @@ sealed abstract class Chunk[+A] extends ChunkLike[A] with Serializable { self =>
         self ++ chunk ++ end
       case (self, Chunk.Empty) => self
       case (Chunk.Empty, that) => that
-      case (self, that) =>
+      case (self, that)        =>
         val diff = that.concatDepth - self.concatDepth
         if (math.abs(diff) <= 1) Chunk.Concat(self, that)
         else if (diff < -1) {
@@ -299,7 +299,7 @@ sealed abstract class Chunk[+A] extends ChunkLike[A] with Serializable { self =>
     else
       self match {
         case Chunk.Slice(c, o, l) => Chunk.Slice(c, o + n, l - n)
-        case Chunk.Concat(l, r) =>
+        case Chunk.Concat(l, r)   =>
           if (n > l.length) r.drop(n - l.length)
           else Chunk.Concat(l.drop(n), r)
         case _ =>
@@ -319,7 +319,7 @@ sealed abstract class Chunk[+A] extends ChunkLike[A] with Serializable { self =>
     else
       self match {
         case Chunk.Slice(c, o, l) => Chunk.Slice(c, o, l - n)
-        case Chunk.Concat(l, r) =>
+        case Chunk.Concat(l, r)   =>
           if (n > r.length) l.dropRight(n - r.length)
           else Chunk.Concat(l, r.dropRight(n))
         case _ =>
@@ -823,7 +823,7 @@ sealed abstract class Chunk[+A] extends ChunkLike[A] with Serializable { self =>
     else
       self match {
         case Chunk.Slice(c, o, _) => Chunk.Slice(c, o, n)
-        case Chunk.Concat(l, r) =>
+        case Chunk.Concat(l, r)   =>
           if (n > l.length) Chunk.Concat(l, r.take(n - l.length))
           else l.take(n)
         case _ =>
@@ -840,7 +840,7 @@ sealed abstract class Chunk[+A] extends ChunkLike[A] with Serializable { self =>
     else
       self match {
         case Chunk.Slice(c, o, l) => Chunk.Slice(c, o + l - n, n)
-        case Chunk.Concat(l, r) =>
+        case Chunk.Concat(l, r)   =>
           if (n > r.length) Chunk.Concat(l.takeRight(n - r.length), r)
           else r.takeRight(n)
         case _ =>
@@ -1137,7 +1137,7 @@ object Chunk extends ChunkFactory with ChunkPlatformSpecific {
     val bits      = left.length min right.length
     val fullBytes = bits >> 3
     val remBits   = bits & 7
-    val arr = Array.ofDim[Byte](
+    val arr       = Array.ofDim[Byte](
       if (remBits == 0) fullBytes else fullBytes + 1
     )
     var i    = 0
@@ -1280,7 +1280,7 @@ object Chunk extends ChunkFactory with ChunkPlatformSpecific {
       case iterable if iterable.isEmpty => Empty
       case vector: Vector[A]            => VectorChunk(vector)
       case arrSeq: mutable.ArraySeq[A]  => fromArraySeq(arrSeq)
-      case iterable =>
+      case iterable                     =>
         val builder = ChunkBuilder.make[A]()
         builder.sizeHint(iterable)
         builder ++= iterable
@@ -1918,7 +1918,7 @@ object Chunk extends ChunkFactory with ChunkPlatformSpecific {
 
   private[zio] object BitOps {
     def apply[T](implicit ops: BitOps[T]): BitOps[T] = ops
-    implicit val ByteOps: BitOps[Byte] = new BitOps[Byte] {
+    implicit val ByteOps: BitOps[Byte]               = new BitOps[Byte] {
       def zero: Byte                = 0
       def one: Byte                 = 1
       def reverse(a: Byte): Byte    = throw new UnsupportedOperationException
@@ -2120,7 +2120,7 @@ object Chunk extends ChunkFactory with ChunkPlatformSpecific {
       val bits      = self.length min that.length
       val bytes     = bits >> 3
       val leftovers = bits - bytes * 8
-      val arr = Array.ofDim[Byte](
+      val arr       = Array.ofDim[Byte](
         if (leftovers == 0) bytes else bytes + 1
       )
 
@@ -2391,7 +2391,7 @@ object Chunk extends ChunkFactory with ChunkPlatformSpecific {
 
     override val length: Int       = unpacked.length / bits + (if (unpacked.length % bits == 0) 0 else 1)
     private def bitOr0(index: Int) = if (index < unpacked.length && unpacked(index)) one else zero
-    override def apply(n: Int): T =
+    override def apply(n: Int): T  =
       if (n < 0 || n >= length)
         throw new IndexOutOfBoundsException(s"Packed boolean chunk index $n out of bounds [0, $length)")
       else {

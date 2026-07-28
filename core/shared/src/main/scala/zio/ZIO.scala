@@ -1371,10 +1371,10 @@ sealed trait ZIO[-R, +E, +A]
     for {
       done  <- Promise.make[E1, (A1, Fiber[E1, A1])]
       fails <- Ref.make[Int](ios.size)
-      c <- ZIO.uninterruptibleMask { restore =>
+      c     <- ZIO.uninterruptibleMask { restore =>
              for {
                fs <- ZIO.foreach(self :: ios.toList)(io => graft.applyOnExit(ZIO.interruptible(io)).fork)
-               _ <- fs.foldLeft[ZIO[R1, E1, Any]](ZIO.unit) { case (io, f) =>
+               _  <- fs.foldLeft[ZIO[R1, E1, Any]](ZIO.unit) { case (io, f) =>
                       io *> f.await.flatMap(arbiter(fs, f, done, fails)).fork
                     }
 
@@ -2788,7 +2788,6 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
    *
    *   1. Ensures this `acquire` effect will not be interrupted. Of course,
    *      acquisition may fail for internal reasons (an uncaught exception).
-   *
    *   1. Ensures the `release` effect will not be interrupted, and will be
    *      executed so long as this effect successfully acquires the resource.
    *
@@ -3467,8 +3466,8 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
     trace: Trace
   ): ZIO[R, E, Array[B]] =
     in.length match {
-      case 0 => ZIO.succeed(Array.empty[B])
-      case 1 => ZIO.suspendSucceed(f(in(0)).map(Array(_)))
+      case 0    => ZIO.succeed(Array.empty[B])
+      case 1    => ZIO.suspendSucceed(f(in(0)).map(Array(_)))
       case size =>
         ZIO.suspendSucceed {
           val iterator = in.iterator
@@ -3563,8 +3562,8 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
     f: A => ZIO[R, E, B]
   )(implicit bf: BuildFrom[Collection[A], B, Collection[B]], trace: Trace): ZIO[R, E, Collection[B]] =
     as.size match {
-      case 0 => ZIO.succeed(bf.fromSpecific(as)(Nil))
-      case 1 => ZIO.suspendSucceed(f(as.head)).map(b => bf.fromSpecific(as)(as.map(_ => b)))
+      case 0    => ZIO.succeed(bf.fromSpecific(as)(Nil))
+      case 1    => ZIO.suspendSucceed(f(as.head)).map(b => bf.fromSpecific(as)(as.map(_ => b)))
       case size =>
         ZIO.suspendSucceed {
           exec match {
@@ -3663,8 +3662,8 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
     ZIO.suspendSucceed {
       val as0 = as
       as0.size match {
-        case 0 => Exit.unit
-        case 1 => f(as0.head).unit
+        case 0    => Exit.unit
+        case 1    => f(as0.head).unit
         case size =>
           ZIO.parallelismWith {
             case Some(n) if n < size => foreachParDiscard(n)(as0, size)(f)
@@ -3839,7 +3838,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
       val interrupted = new java.util.concurrent.atomic.AtomicBoolean(false)
       val latch       = scala.concurrent.Promise[Unit]()
       ZIO.suspend {
-        val ec = executor.asExecutionContext
+        val ec              = executor.asExecutionContext
         val interruptibleEC = new scala.concurrent.ExecutionContext {
           def execute(runnable: Runnable): Unit =
             if (!interrupted.get) ec.execute(runnable)
@@ -4359,7 +4358,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
         promise <- ref.modifyZIO { map =>
                      map.get(a) match {
                        case Some(promise) => Exit.succeed((promise, map))
-                       case _ =>
+                       case _             =>
                          for {
                            promise <- Promise.make[E, (FiberRefs.Patch, B)]
                            _       <- f(a).diffFiberRefs.intoPromise(promise).fork
@@ -4479,7 +4478,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
   def parallelFinalizers[R, E, A](zio: => ZIO[R, E, A])(implicit trace: Trace): ZIO[R, E, A] =
     ZIO.environmentWithZIO[R] { environment =>
       environment.getDynamic[Scope] match {
-        case None => zio
+        case None        => zio
         case Some(scope) =>
           scope.executionStrategy match {
             case ExecutionStrategy.Parallel => zio
@@ -4491,7 +4490,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
   def parallelFinalizersMask[R, E, A](f: ZIO.FinalizersRestorer => ZIO[R, E, A])(implicit trace: Trace): ZIO[R, E, A] =
     ZIO.environmentWithZIO[R] { environment =>
       environment.getDynamic[Scope] match {
-        case None => f(ZIO.FinalizersRestorer.Identity)
+        case None        => f(ZIO.FinalizersRestorer.Identity)
         case Some(scope) =>
           scope.executionStrategy match {
             case ExecutionStrategy.Parallel     => ZIO.parallelFinalizers(f(ZIO.FinalizersRestorer.MakeParallel))
@@ -4714,7 +4713,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
   def sequentialFinalizers[R, E, A](zio: => ZIO[R, E, A])(implicit trace: Trace): ZIO[R, E, A] =
     ZIO.environmentWithZIO[R] { environment =>
       environment.getDynamic[Scope] match {
-        case None => zio
+        case None        => zio
         case Some(scope) =>
           scope.executionStrategy match {
             case ExecutionStrategy.Sequential => zio
@@ -5576,7 +5575,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
 
     private[zio] def apply(fiberState: Fiber.Runtime[?, ?])(implicit trace: Trace): Grafter = {
       val scopeOverride = fiberState.getFiberRefOrNull(FiberRef.forkScopeOverride)
-      val scope =
+      val scope         =
         if ((scopeOverride eq null) || (scopeOverride eq None)) fiberState.scope
         else scopeOverride.get
 
@@ -6277,7 +6276,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
       def apply[R, E, A](zio: ZIO[R, E, A])(implicit trace: Trace): ZIO[R, E, A] =
         ZIO.environmentWithZIO[R] { environment =>
           environment.getDynamic[Scope] match {
-            case None => zio
+            case None        => zio
             case Some(scope) =>
               scope.executionStrategy match {
                 case ExecutionStrategy.ParallelN(n) => zio
@@ -6323,7 +6322,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
       foreachParUnbounded(as, size)(fn)
     else
       ZIO.suspendSucceed {
-        val array = Array.ofDim[AnyRef](size)
+        val array                                     = Array.ofDim[AnyRef](size)
         val zioFunction: ((A, Int)) => ZIO[R, E, Any] = { case (a, i) =>
           fn(a).flatMap { b => array(i) = b.asInstanceOf[AnyRef]; Exit.unit }
         }
@@ -6361,7 +6360,7 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
     f: A => ZIO[R, E, B]
   )(implicit bf: BuildFrom[Collection[A], B, Collection[B]], trace: Trace): ZIO[R, E, Collection[B]] =
     ZIO.suspendSucceed {
-      val array = Array.ofDim[AnyRef](size)
+      val array                                     = Array.ofDim[AnyRef](size)
       val zioFunction: ((A, Int)) => ZIO[R, E, Any] = { case (a, i) =>
         f(a).flatMap(b => ZIO.succeed(array(i) = b.asInstanceOf[AnyRef]))
       }
@@ -6374,8 +6373,8 @@ object ZIO extends ZIOCompanionPlatformSpecific with ZIOCompanionVersionSpecific
     size: Int
   )(f: A => ZIO[R, E, Any])(implicit trace: Trace): ZIO[R, E, Unit] =
     size match {
-      case 0 => Exit.unit
-      case 1 => f(as.head).unit
+      case 0    => Exit.unit
+      case 1    => f(as.head).unit
       case size =>
         ZIO.uninterruptibleMask { restore =>
           val promise = Promise.unsafe.make[Unit, Unit](FiberId.None)(Unsafe)

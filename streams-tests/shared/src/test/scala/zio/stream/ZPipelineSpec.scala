@@ -47,8 +47,8 @@ object ZPipelineSpec extends ZIOBaseSpec {
       suite("encodeStringWith")(
         test("doesn't cause OOM errors on large inputs") {
           for {
-            bytes <- Random.RandomLive.nextString(12 * 1024 * 1024).map(_.getBytes)
-            stream = ZStream.fromIterable(bytes)
+            bytes   <- Random.RandomLive.nextString(12 * 1024 * 1024).map(_.getBytes)
+            stream   = ZStream.fromIterable(bytes)
             pipeline = ZPipeline.decodeStringWith(Charset.forName("UTF-8")) >>>
                          ZPipeline.splitOn("\n") >>>
                          ZPipeline.map[String, String](_.concat("\n")) >>>
@@ -334,7 +334,7 @@ object ZPipelineSpec extends ZIOBaseSpec {
           val chunk = Chunk(1)
           for {
             collector <- Queue.unbounded[Int]
-            result <- ZStream
+            result    <- ZStream
                         .fromChunk(chunk)
                         .via(ZPipeline.mapEitherChunked(i => Left(i)))
                         .run(ZSink.fromQueue(collector))
@@ -357,7 +357,7 @@ object ZPipelineSpec extends ZIOBaseSpec {
           val chunk = Chunk.fromIterable(range)
           for {
             collector <- Queue.unbounded[Int]
-            result <- ZStream
+            result    <- ZStream
                         .fromChunk(chunk)
                         .via(ZPipeline.mapEitherChunked(i => if (i == 5) Left(i) else Right(i)))
                         .run(ZSink.fromQueue(collector))
@@ -389,7 +389,7 @@ object ZPipelineSpec extends ZIOBaseSpec {
           val chunk = Chunk.range(0, 10)
           for {
             collector <- Queue.unbounded[Int]
-            result <- ZStream
+            result    <- ZStream
                         .fromChunk(chunk)
                         .via(ZPipeline.mapChunksEither(_ => Left("this is an error")))
                         .run(ZSink.fromQueue(collector))

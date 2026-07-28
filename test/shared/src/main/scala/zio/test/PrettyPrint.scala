@@ -29,7 +29,7 @@ private[zio] object PrettyPrint extends PrettyPrintVersionSpecific {
       case double: Double   => String.valueOf(double)
       case float: Float     => String.valueOf(float)
       case boolean: Boolean => String.valueOf(boolean)
-      case char: Char =>
+      case char: Char       =>
         val s = new Array[Char](3)
         s(0) = '\''
         s(1) = char
